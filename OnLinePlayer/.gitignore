@@ -1,2 +1,5 @@
 .settings
 .idea
+.project
+.classpath
+.mymetadata
