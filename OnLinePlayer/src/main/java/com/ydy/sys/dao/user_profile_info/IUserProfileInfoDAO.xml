@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ydy.sys.dao.user_profile_info.IUserProfileInfoDAO">
+
+	<!-- 建立sql查询结果字段与实体属性的映射关系 -->
+	<resultMap id="UserProfileInfoMap" type="com.ydy.sys.entity.UserProfileInfo">
+		<result column="id" property="id" />
+		<result column="user_id" property="userId" />
+		<result column="group_id" property="groupId" />
+		<result column="avatar" property="avatar" />
+	</resultMap>
+	
+	<!-- 注册新用户 -->
+	<insert id="insert">
+		INSERT INTO user_profile_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userId!=null and userId!=''">user_id,</if>
+			<if test="groupId!=null and groupId!=''">group_id,</if>
+			<if test="avatar!=null and avatar!=''">avatar,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userId!=null and userId!=''">#{userId},</if>
+			<if test="groupId!=null and groupId!=''">#{groupId},</if>
+			<if test="avatar!=null and avatar!=''">#{avatar},</if>
+		</trim>
+	</insert>
+	
+	<!-- 查询指定用户组的数量 -->
+	<select id="countByGroupId" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			user_profile_info
+		WHERE
+			group_id = #{groupId}
+	</select>
+	
+	<!-- 更新用户扩展信息 -->
+	<update id="update">
+		UPDATE user_profile_info
+		<set>
+			<if test="groupId!=null">group_id=#{groupId},</if>
+			<if test="avatar!=null">avatar=#{avatar},</if>
+		</set>
+		WHERE user_id = #{userId}
+	</update>
+	
+	<!-- 批量更新用户 -->
+	<update id="batchUpdate">
+		UPDATE user_profile_info 
+		<set>
+			<if test="groupId!=null">group_id=#{groupId},</if>
+		</set>
+		WHERE user_id IN
+		<foreach collection="userIdArr" index="index" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+</mapper>

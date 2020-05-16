@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="OnLinePlayer Maven Webapp"
+  id="myeclipse.1574264891984"
+  context-root="/OnLinePlayer"
+  j2ee-spec="1.7"
+  archive="OnLinePlayer Maven Webapp.war">
+  <attributes>
+    <attribute name="webrootdir" value="src/main/webapp" />
+  </attributes>
+</project-module>
+

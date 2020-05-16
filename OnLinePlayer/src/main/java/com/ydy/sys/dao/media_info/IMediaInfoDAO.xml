@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ydy.sys.dao.media_info.IMediaInfoDAO">
+	<!-- 建立sql查询结果字段与实体属性的映射关系 -->
+	<resultMap id="MediaInfoMap" type="com.ydy.sys.entity.MediaInfo">
+		<result column="media_id" property="mediaId" />
+		<result column="type_id" property="typeId" />
+		<result column="update_time" property="updateTime" />
+		<result column="status" property="status" />
+		<result column="haibao" property="haibao" />
+		<result column="dafengmian" property="dafengmian" />
+		<result column="fengmian" property="fengmian" />
+		<result column="biaoti" property="biaoti" />
+		<result column="bieming" property="bieming" />
+		<result column="jianjie" property="jianjie" />
+		<result column="size" property="size" />
+	</resultMap>
+	
+	<!-- 插入字段 -->
+	<insert id="alter">
+		${alterSql}
+	</insert>
+	
+	<!-- 查询媒体列表 -->
+	<select id="list" resultMap="MediaInfoMap">
+		SELECT
+			media_id,
+			type_id,
+			haibao,
+			fengmian,
+			biaoti
+		FROM
+			media_info
+		WHERE
+		1 = 1
+		<if test="typeId!=null and typeId!=''">AND type_id = #{typeId}</if>
+		<if test="status!=null and status!=''">AND status = #{status}</if>
+		<if test="keyWord!=null and keyWord!=''">
+			AND (biaoti LIKE CONCAT('%',#{keyWord},'%') OR bieming LIKE CONCAT('%',#{keyWord},'%'))
+		</if> 
+		
+		ORDER BY
+			update_time DESC
+	</select>
+
+	<!-- 根据主键查询媒体信息 -->
+	<select id="selectById" resultMap="MediaInfoMap">
+		SELECT
+			media_id,
+			type_id,
+			haibao,
+			dafengmian,
+			fengmian,
+			biaoti,
+			bieming,
+			jianjie
+		FROM
+			media_info
+		WHERE
+			media_id = #{mediaId}
+	</select>
+
+	<!-- 根据主键和分类id，获取媒体字段信息 -->
+	<select id="selectSqlById" resultType="hashmap">
+		${selectSql}
+	</select>
+	
+	<!-- 根据主键，获取媒体信息 -->
+	<select id="selectByMediaId" resultType="hashmap">
+		SELECT
+			mi.update_time AS uploadTime,
+			mi.*,
+			vi.video_id
+		FROM
+			media_info mi,
+			type_info ti,
+			video_info vi
+		WHERE
+			mi.type_id = ti.id 
+			AND mi.media_id = #{mediaId}
+			AND vi.media_id = #{mediaId}
+	</select>
+	
+	<!-- 根据主键，查询该媒体标题 -->
+	<select id="selectBiaotiById" resultType="String">
+		SELECT
+			biaoti
+		FROM
+			media_info
+		WHERE
+			media_id = #{mediaId}
+	</select>
+	
+	<!-- 插入一条数据 -->
+	<insert id="insert" parameterType="com.ydy.sys.entity.MediaInfo">
+		insert into
+			media_info(	media_id,update_time,status,haibao,
+						fengmian,biaoti,jianjie,bieming,
+						type_id,dafengmian,play_id,url,user_id,size)
+		values
+			(#{mediaId},#{updateTime},#{status},
+						#{haibao},#{fengmian},#{biaoti},
+						#{jianjie},#{bieming},#{typeId},#{dafengmian},#{playId},#{url},#{userId},#{size})
+	</insert>
+	
+	<!-- 更新一条媒体信息 -->
+	<update id="update">
+		${alterSql}
+	</update>
+	
+	<!-- 更新对应的媒体的时间、状态等 -->
+	<update id="updateMedia">
+		UPDATE media_info
+		<set>
+			<if test="updateTime!=null">update_time=#{updateTime},</if>
+		</set>
+		WHERE media_id = #{mediaId}
+	</update>
+	
+	<!-- 批量更新媒体 -->
+	<update id="batchUpdate">
+		UPDATE media_info 
+		<set>
+			<if test="status!=null and status!=''">status=#{status},</if>
+			<if test="typeId!=null and typeId!=''">type_id=#{typeId},</if>
+		</set>
+		WHERE media_id IN
+		<foreach collection="mediaIdArr" index="index" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+	
+	<!-- 批量删除 -->
+	<delete id="batchDelete">
+		DELETE FROM media_info WHERE media_id IN
+		<foreach collection="mediaIdArr" index="index" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+	
+	<!-- 根据关键词，查询符合条件的媒体信息，获取其主键 -->
+	<select id="searchIdByKeyWord" resultType="String">
+		SELECT
+			media_id
+		FROM
+			media_info
+		WHERE
+			1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND (biaoti LIKE ('%${keyWord}%') OR bieming LIKE ('%${keyWord}%'))
+		</if>
+	</select>
+	
+	<!-- 查询标题对应的媒体的数量 -->
+	<select id="countByBiaoti" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			media_info
+		WHERE
+			biaoti = #{biaoti}
+		<if test="mediaId!=null and mediaId!=''">AND media_id != #{mediaId}</if>
+	</select>
+	
+	<insert id="saveVideo" parameterType="com.ydy.sys.entity.UpLoadVideoInfo">
+		insert into videos values(#{fileId},#{titleOrig},#{titleAlter},
+						#{size},#{type},#{path},#{uploadTime},#{fileNamedirs})
+	</insert>
+
+
+
+	<!-- 获取用户上传的视频列表 -->
+	<select id="listMedia" resultType="hashmap">
+		SELECT
+		mi.media_id,
+		mi.status,
+		mi.biaoti,
+		mi.fengmian,
+		mi.jianjie,
+		vi.video_id
+		FROM
+		video_info vi,
+		media_info mi
+		WHERE
+		vi.media_id = mi.media_id
+		AND mi.user_id = #{userId}
+		ORDER BY
+		mi.media_id DESC
+	</select>
+
+	<!-- 获取用户公开的视频列表 -->
+	<select id="selectMediaByUserId" resultType="hashmap">
+		SELECT
+		mi.media_id,
+		mi.status,
+		mi.biaoti,
+		mi.fengmian,
+		mi.jianjie,
+		vi.video_id
+		FROM
+		video_info vi,
+		media_info mi
+		WHERE
+		vi.media_id = mi.media_id
+		AND mi.user_id = #{userId}
+		AND mi.status = 1
+		ORDER BY
+		mi.media_id DESC
+		limit 0,3
+	</select>
+
+
+
+
+    <!--删除指定用户下的指定视频视频信息-->
+    <delete id="deleteMediaByUserAndMediaId">
+        DELETE
+        FROM
+        media_info
+        WHERE
+        user_id = #{userId}
+        <if test="mediaId!=null and mediaId!=''">
+            AND media_id = #{mediaId}
+        </if>
+    </delete>
+
+	<!-- 批量更新媒体 -->
+	<update id="Update">
+		UPDATE media_info
+		<set>
+			<if test="status!=null and status!=''">status=#{status},</if>
+		</set>
+		WHERE media_id IN
+		<foreach collection="mediaIdArr" index="index" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+</mapper>

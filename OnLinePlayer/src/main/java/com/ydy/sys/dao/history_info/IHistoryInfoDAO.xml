@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ydy.sys.dao.history_info.IHistoryInfoDAO">
+	<!-- 建立sql查询结果字段与实体属性的映射关系 -->
+	<resultMap id="HistoryInfoMap" type="com.ydy.sys.entity.HistoryInfo">
+		<result column="id" property="id" />
+		<result column="video_id" property="videoId" />
+		<result column="user_id" property="userId" />
+		<result column="update_time" property="updateTime" />
+	</resultMap>
+	
+	<!-- 删除记录 -->
+	<delete id="delete">
+		DELETE
+		FROM
+			history_info
+		WHERE
+			user_id = #{userId}
+		<if test="videoId!=null and videoId!=''">
+			AND video_id = #{videoId}
+		</if>
+	</delete>
+
+	<!-- 插入新的记录 -->
+	<insert id="insert">
+		INSERT INTO history_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="videoId!=null and videoId!=''">video_id,</if>
+			<if test="userId!=null and userId!=''">user_id,</if>
+			<if test="updateTime!=null and updateTime!=''">update_time,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="videoId!=null and videoId!=''">#{videoId},</if>
+			<if test="userId!=null and userId!=''">#{userId},</if>
+			<if test="updateTime!=null and updateTime!=''">#{updateTime},</if>
+		</trim>
+	</insert>
+
+	<!-- 获取用户最新的5条历史记录 -->
+	<select id="listHistory5" resultType="hashmap">
+		SELECT 
+			hi.video_id,
+			hi.update_time,
+			vi.image,
+			mi.biaoti,
+			mi.jianjie,
+			mi.media_id
+			
+		FROM
+			history_info hi,
+			video_info vi,
+			media_info mi
+		WHERE
+			hi.video_id = vi.video_id
+		AND vi.status = '1'
+		AND vi.media_id = mi.media_id
+		AND hi.user_id = #{userId}
+		ORDER BY hi.id DESC
+		limit 0,5;
+	</select>
+	
+	<!-- 获取用户的历史记录列表 -->
+	<select id="listHistory" resultType="hashmap">
+		SELECT
+			hi.video_id,
+			hi.update_time,
+			vi.image,
+			vi.title,
+			mi.biaoti,
+			mi.fengmian,
+			mi.jianjie,
+			mi.media_id,
+			ti.name
+
+		FROM
+			history_info hi,
+			video_info vi,
+			media_info mi,
+			type_info ti
+		WHERE
+			hi.video_id = vi.video_id
+		AND vi.status IN ('1','2')
+		AND vi.media_id = mi.media_id
+		AND mi.type_id = ti.id
+		AND hi.user_id = #{userId}
+		ORDER BY
+			hi.id DESC
+	</select>
+	
+	<!-- 删除历史浏览记录表中的内容 -->
+	<delete id="deleteByUserIdArr">
+		DELETE FROM history_info WHERE user_id IN
+		<foreach collection="userIdArr" index="index" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+</mapper>
